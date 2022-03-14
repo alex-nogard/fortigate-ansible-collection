@@ -1,0 +1,28 @@
+# This script is used to backup full fortigate config
+# Created by alexnogard from https://alexnogard.com
+# Feel free to modify it
+- hosts: fortigates
+  collections:
+  - fortinet.fortios
+  connection: httpapi
+  vars:
+    ansible_httpapi_port: 443
+    ansible_httpapi_use_ssl: yes
+    ansible_httpapi_validate_certs: no
+    vdom: root
+  tasks:
+  - set_fact: time="{{lookup('pipe','date \"+%Y-%m-%d\"')}}"
+  - name: fact gathering
+    fortios_monitor_fact:
+       vdom: ""
+       access_token: "{{ fortios_access_token }}"
+       selector: 'system_config_backup'
+       params:
+         scope: global
+    register: output
+
+  - name: Copy output to file
+    copy:
+     content: '{{ output }}'
+        #Change destination/directory
+     dest: '{{inventory_hostname}}_{{time}}.config'
