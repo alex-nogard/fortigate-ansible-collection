@@ -1,0 +1,1 @@
+# fortigate-ansible-collection
