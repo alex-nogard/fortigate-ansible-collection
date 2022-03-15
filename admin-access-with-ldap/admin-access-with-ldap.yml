@@ -1,4 +1,6 @@
-
+# This script is used to backup full fortigate config
+# Created by alexnogard from https://alexnogard.com
+# Feel free to modify it
 - hosts: fortigates
   collections:
     - fortinet.fortios
