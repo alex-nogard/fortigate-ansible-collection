@@ -1,1 +1,75 @@
 
+- hosts: fortigates
+  collections:
+    - fortinet.fortios
+  connection: httpapi
+  vars:
+   vdom: "root"
+   ansible_httpapi_use_ssl: yes
+   ansible_httpapi_validate_certs: no
+   ansible_httpapi_port: 443
+  tasks:
+# enter your LDAP Values
+  - name: Configure LDAP server entries.
+    fortios_user_ldap:
+      vdom:  "{{ vdom }}"
+      state: present
+      user_ldap:
+        cnid: "sAMAccountName"
+        dn: "dc=mycompany,dc=name,dc=com"
+        interface_select_method: "auto"
+        name: "MyCompanyLDAP"
+        password: "password"
+        search_type: "recursive"
+        secure: "disable"
+        server: "192.168.100.40"
+        type: "regular"
+        username: "user"
+    register: ldap_output
+
+# Create the variable to retrieve the LDAP name
+  - set_fact: namev="{{ldap_output.meta.mkey}}"
+
+  - name: Create the user group with ldap link
+    fortios_user_group:
+      vdom: "{{ vdom }}"
+      state: present
+      user_group:
+        match:
+          -
+            group_name: "CN=mygroup,dc=mycompany,dc=name,dc=com"
+            server_name: '{{ namev }}'
+            id: 1
+        id: 1
+        name: Admin_Group_ldap
+        member:
+          -
+            name: '{{ namev }}'
+    register: group_output
+# Create the variable to retrieve the groupe name
+  - set_fact: groupv="{{group_output.meta.mkey}}"
+
+# Configure trusted hosts for security
+  - name: Config system admin
+    fortios_system_admin:
+      vdom: "{{ vdom }}"
+      state: present
+      system_admin:
+        accprofile: super_admin
+        remote_auth: enable
+        remote_group: '{{ groupv }}'
+        name: '{{ groupv }}'
+        trusthost1: 0.0.0.0 0.0.0.0
+        trusthost10: 0.0.0.0 0.0.0.0
+        trusthost2: 0.0.0.0 0.0.0.0
+        trusthost3: 0.0.0.0 0.0.0.0
+        trusthost4: 0.0.0.0 0.0.0.0
+        trusthost5: 0.0.0.0 0.0.0.0
+        trusthost6: 0.0.0.0 0.0.0.0
+        trusthost7: 0.0.0.0 0.0.0.0
+        trusthost8: 0.0.0.0 0.0.0.0
+        trusthost9: 0.0.0.0 0.0.0.0
+        wildcard: enable
+        vdom:
+          -
+             name: "{{ vdom }}"
