@@ -1,0 +1,84 @@
+# This script is used to backup full fortigate config
+# Created by alexnogard from https://alexnogard.com
+# Feel free to modify it
+- hosts: fortigates
+  collections:
+  - fortinet.fortios
+  connection: httpapi
+  vars:
+    ansible_httpapi_port: 443
+    ansible_httpapi_use_ssl: yes
+    ansible_httpapi_validate_certs: no
+    vdom: root
+  tasks:
+  - name: fortios_system_global
+    fortios_system_global:
+      vdom: '{{ vdom }}'
+      system_global:
+        admin_concurrent: enable
+        admin_console_timeout: 50
+        language: english
+        gui_lines_per_page: 100
+        alias: '{{ inventory_hostname }}'
+        gui_theme: red
+        admin_ssh_port: 22
+        admin_ssh_v1: disable
+
+  - name: Configure DNS
+    fortios_system_dns:
+      vdom: '{{ vdom }}'
+      system_dns:
+        cache_notfound_responses: disable
+        dns_cache_limit: 5000
+        dns_cache_ttl: 1800
+        dns_over_tls: disable
+        interface_select_method: auto
+        primary: 208.91.112.53
+        retry: 2
+        secondary: 208.91.112.52
+        source_ip: 0.0.0.0
+        ssl_certificate: Fortinet_Factory
+        timeout: 5
+  - name: fortios_system_ntp
+    fortios_system_ntp:
+      vdom: '{{ vdom }}'
+      system_ntp:
+        ntpserver:
+         -
+            id:  "1"
+            server: "192.168.100.40"
+
+  - name: fortios_system_snmp_community
+    fortios_system_snmp_community:
+      vdom: '{{ vdom }}'
+      state: present
+      system_snmp_community:
+        events: "cpu-high,mem-low,log-full,vpn-tun-up,vpn-tun-down,ha-hb-failure,ips-anomaly,ha-member-up,ha-member-down,temperature-high,fan-failure,power-supply-failure,voltage-alert"
+        id: 1
+        hosts:
+          -
+             ip: 192.168.1.111
+        name: mycommunity
+        query_v1_port: 161
+        query_v1_status: enable
+        query_v2c_port: 161
+        query_v2c_status: enable
+        status: enable
+        trap_v1_lport: 162
+        trap_v1_rport: 162
+        trap_v1_status: enable
+        trap_v2c_lport: 162
+        trap_v2c_rport: 162
+        trap_v2c_status: enable
+        
+  - name: fortios_system_email_server
+    fortios_system_email_server:
+      vdom: '{{ vdom }}'
+      system_email_server:
+        authenticate: enable
+        port: 465
+        security: smtps
+        server: notification.fortinet.net
+        type: custom
+        username: 'myuser'
+        password: 'mypassword'
